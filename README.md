@@ -498,3 +498,266 @@ import {
 
 <Form onSubmit={onSubmit} validation={{ mode: 'onBlur' }}>
 ```
+
+```javascript
+// api/prisma/schema.prisma
+
+model Contact {
+  id        Int @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+```
+
+```
+yarn rw db save create contact
+```
+
+```
+yarn rw db up
+```
+
+```
+yarn rw g sdl contact
+```
+
+```graphql
+type Mutation {
+  createContact(input: CreateContactInput!): Contact
+}
+```
+
+```javascript
+export const createContact = ({ input }) => {
+  return db.contact.create({ data: input })
+}
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+const CREATE_CONTACT = gql`
+  mutation CreateContactMutation($input: CreateContactInput!) {
+    createContact(input: $input) {
+      id
+    }
+  }
+`
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+import {
+  Form,
+  TextField,
+  TextAreaField,
+  Submit,
+  FieldError,
+  Label,
+} from '@redwoodjs/forms'
+import { useMutation } from '@redwoodjs/web'
+import BlogLayout from 'src/layouts/BlogLayout'
+
+const ContactPage = () => {
+  const [create] = useMutation(CREATE_CONTACT)
+
+  const onSubmit = (data) => {
+    console.log(data)
+  }
+
+  return (...)
+}
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+const ContactPage = () => {
+  const [create] = useMutation(CREATE_CONTACT)
+
+  const onSubmit = (data) => {
+    create({ variables: { input: data }})
+    console.log(data)
+  }
+
+  return (...)
+}
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+const ContactPage = () => {
+  const [create, { loading, error }] = useMutation(CREATE_CONTACT)
+
+  const onSubmit = (data) => {
+    create({ variables: { input: data } })
+    console.log(data)
+  }
+
+  return (...)
+}
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+return (
+  // ...
+  <Submit disabled={loading}>Save</Submit>
+  // ...
+)
+```
+
+```javascript
+// ...
+
+import { Flash, useFlash, useMutation } from '@redwoodjs/web'
+import BlogLayout from 'src/layouts/BlogLayout'
+
+// ...
+
+const ContactPage = () => {
+
+  const { addMessage } = useFlash()
+
+  const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
+
+    onCompleted: () => {
+      addMessage('Thank you for your submission!', {
+        style: { backgroundColor: 'green', color: 'white', padding: '1rem' }
+      })
+    },
+  })
+
+  // ...
+
+  return (
+    <BlogLayout>
+
+      <Flash timeout={2000} />
+      // ...
+```
+
+```javascript
+// api/src/services/contacts/contacts.js
+
+import { UserInputError } from '@redwoodjs/api'
+
+import { db } from 'src/lib/db'
+
+const validate = (input) => {
+  if (input.email && !input.email.match(/[^@]+@[^.]+\..+/)) {
+    throw new UserInputError("Can't create new contact", {
+      messages: {
+        email: ['is not formatted like an email address'],
+      },
+    })
+  }
+}
+
+export const contacts = () => {
+  return db.contact.findMany()
+}
+
+export const createContact = ({ input }) => {
+  validate(input)
+  return db.contact.create({ data: input })
+}
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+<Form onSubmit={onSubmit} validation={{ mode: 'onBlur' }}>
+  {error && (
+    <div style={{ color: 'red' }}>
+      {"We couldn't send your message: "}
+      {error.message}
+    </div>
+  )}
+  // ...
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+<TextField
+  name="email"
+  validation={{
+    required: true,
+  }}
+  errorClassName="error"
+/>
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+import {
+  Form,
+  TextField,
+  TextAreaField,
+  Submit,
+  FieldError,
+  Label,
+  FormError,
+} from '@redwoodjs/forms'
+import { Flash, useFlash, useMutation } from '@redwoodjs/web'
+// ...
+
+return (
+  <BlogLayout>
+    <Flash timeout={1000} />
+    <Form onSubmit={onSubmit} validation={{ mode: 'onBlur' }} error={error}>
+      <FormError
+        error={error}
+        wrapperStyle={{ color: 'red', backgroundColor: 'lavenderblush' }}
+      />
+
+      //...
+)
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+import { useForm } from 'react-hook-form'
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+const ContactPage = () => {
+  const formMethods = useForm()
+  //...
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+return (
+  <BlogLayout>
+    <Flash timeout={1000} />
+    <Form
+      onSubmit={onSubmit}
+      validation={{ mode: 'onBlur' }}
+      error={error}
+      formMethods={formMethods}
+    >
+    // ...
+```
+
+```javascript
+// web/src/pages/ContactPage/ContactPage.js
+
+const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
+  onCompleted: () => {
+    // addMessage...
+    formMethods.reset()
+  },
+})
+```
