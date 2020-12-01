@@ -765,3 +765,10 @@ const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
 ```
 yarn rw g deploy netlify
 ```
+
+```
+datasource DS {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
