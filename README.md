@@ -761,3 +761,7 @@ const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
   },
 })
 ```
+
+```
+yarn rw g deploy netlify
+```
